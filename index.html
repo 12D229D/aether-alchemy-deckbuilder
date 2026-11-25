@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Aether Alchemy Deckbuilder - Videojuego roguelike de construcción de mazos y combate táctico con combinación de elementos alquímicos interactivos.">
+  <title>Aether Alchemy Deckbuilder - Roguelike Alquímico</title>
+
+  <!-- Google Fonts: Cinzel, Outfit, Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Inter:wght@400;500;600&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <!-- Hoja de Estilos Principal -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- HUD Superior Persistente Durante la Expedición -->
+  <header id="game-hud" class="game-hud hidden" aria-label="HUD de Estadísticas del Alquimista">
+    <div class="hud-section">
+      <div class="hud-bar-container" title="Puntos de Salud del Alquimista">
+        <span class="hud-icon">💖</span>
+        <div class="hud-progress-bar">
+          <div id="hud-hp-fill" class="hp-fill" style="width: 100%;"></div>
+        </div>
+        <span id="hud-hp-text" class="hud-val">60 / 60</span>
+      </div>
+
+      <div class="hud-pill" title="Éter Arcano">
+        <span class="hud-icon">✨</span>
+        <span id="hud-aether-text" class="hud-val">3 / 3</span>
+      </div>
+
+      <div class="hud-pill" title="Monedas de Alquimista">
+        <span id="hud-gold-text" class="hud-val">50 🪙</span>
+      </div>
+    </div>
+
+    <div class="hud-section">
+      <div id="hud-relics-list" class="relics-tray" title="Reliquias Arcanas Equipadas">
+        <!-- Reliquias activas -->
+      </div>
+
+      <button id="btn-view-deck" class="hud-btn-icon" title="Ver cartas del mazo">
+        <span id="hud-deck-count">12 🃏</span>
+      </button>
+
+      <button id="btn-recipe-book" class="hud-btn-icon" title="Grimorio de Recetas Alquímicas">
+        📖 Grimorio
+      </button>
+
+      <button id="btn-sound-toggle" class="hud-btn-icon" title="Silenciar / Activar Sonido">
+        🔊
+      </button>
+    </div>
+  </header>
+
+  <!-- Contenedor Principal de Vistas -->
+  <main id="app-main" class="screen-container">
+
+    <!-- 1. Pantalla de Menú Principal (Único H1 para SEO) -->
+    <section id="screen-menu" class="screen-menu" aria-label="Menú de Inicio">
+      <div class="menu-card-hero">
+        <h1 class="game-main-title">Aether Alchemy</h1>
+        <p class="game-subtitle">Transmuta elementos primordiales y desafía al Atanor Eterno en este roguelike deckbuilder.</p>
+        
+        <div class="menu-actions">
+          <button id="btn-new-run" class="btn-primary">Iniciar Nueva Expedición</button>
+          <button id="btn-continue-run" class="btn-secondary hidden">Continuar Partida Guardada</button>
+        </div>
+
+        <div class="menu-features-list">
+          <div>⚗️ Crisol de Fusión</div>
+          <div>🗺️ Mapa Procedimental</div>
+          <div>⚡ Intent System de IA</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. Pantalla de Mapa de Nodos de Aventura -->
+    <section id="screen-map" class="screen-map hidden" aria-label="Mapa de Aventura">
+      <header class="map-header">
+        <h2>Mapa de la Espiral Elemental</h2>
+        <p id="map-floor-info" class="text-muted">Piso 1 de 8</p>
+      </header>
+
+      <div class="map-tree-scroll">
+        <div id="map-tree" class="map-tree">
+          <!-- Nodos generados por map.js -->
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. Pantalla de Combate por Turnos -->
+    <section id="screen-combat" class="screen-combat hidden" aria-label="Arena de Combate">
+      
+      <!-- Arena: Enemigo vs Jugador -->
+      <div class="combat-arena">
+        
+        <!-- Entidad Jugador -->
+        <div class="entity-card player-entity">
+          <div id="combat-player-avatar" class="entity-avatar">🧙‍♂️
+            <span id="combat-player-block" class="status-badge-block hidden">🛡️ 0</span>
+          </div>
+          <div class="entity-info">
+            <h3 class="entity-name">Alquimista Astral</h3>
+            <div class="entity-hp-bar">
+              <div id="combat-player-hp-fill" class="hp-fill" style="width: 100%;"></div>
+            </div>
+            <span id="combat-player-hp-text" class="entity-hp-label">60 / 60</span>
+            <div id="combat-player-statuses" class="entity-statuses"></div>
+          </div>
+        </div>
+
+        <!-- Indicador Central de Éter -->
+        <div class="combat-center-hud">
+          <div id="combat-aether-orb" class="aether-orb" title="Éter disponible para conjuros">3</div>
+          <span class="aether-label">Éter Disponible</span>
+        </div>
+
+        <!-- Entidad Enemigo -->
+        <div class="entity-card enemy-entity">
+          <div id="combat-enemy-avatar" class="entity-avatar enemy-avatar">🧪
+            <span id="combat-enemy-block" class="status-badge-block hidden">🛡️ 0</span>
+          </div>
+          <div class="entity-info">
+            <h3 id="combat-enemy-name" class="entity-name">Homúnculo</h3>
+            <div id="combat-enemy-intent" class="enemy-intent-container">
+              <!-- Intent de IA -->
+            </div>
+            <div class="entity-hp-bar">
+              <div id="combat-enemy-hp-fill" class="hp-fill" style="width: 100%;"></div>
+            </div>
+            <span id="combat-enemy-hp-text" class="entity-hp-label">38 / 38</span>
+            <div id="combat-enemy-statuses" class="entity-statuses"></div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Área del Crisol Alquímico Interactivo -->
+      <div class="crucible-section" aria-label="Crisol de Fusión Alquímica">
+        <div class="crucible-header">
+          <h3>⚗️ Crisol de Transmutación</h3>
+          <div id="crucible-preview" class="crucible-preview-text">Coloca esencias para sintetizar...</div>
+        </div>
+        
+        <div id="crucible-slots" class="crucible-slots-container">
+          <!-- 3 Ranuras de crisol -->
+        </div>
+
+        <div class="crucible-actions">
+          <button id="btn-clear-crucible" class="btn-secondary">Vaciar Crisol</button>
+          <div class="crucible-btns">
+            <button id="btn-transmute" class="btn-primary" disabled>¡Transmutar en Crisol!</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mano del Jugador y Pilas de Robo/Descarte -->
+      <div class="player-deck-tray">
+        <div class="pile-widget" title="Mazo de Robo">
+          <span class="pile-icon">🎴</span>
+          <span id="draw-pile-count" class="pile-count">0</span>
+          <span class="pile-label">Robo</span>
+        </div>
+
+        <div id="player-hand" class="player-hand">
+          <!-- Cartas interactivas en la mano -->
+        </div>
+
+        <div class="pile-widget" title="Pila de Descarte">
+          <span class="pile-icon">♻️</span>
+          <span id="discard-pile-count" class="pile-count">0</span>
+          <span class="pile-label">Descarte</span>
+        </div>
+
+        <button id="btn-end-turn" class="btn-primary" style="align-self: center; height: fit-content;">Terminar Turno</button>
+      </div>
+
+      <!-- Bitácora de Combate -->
+      <aside class="combat-log-tray" aria-label="Bitácora de Hechos">
+        <div id="combat-log-content"></div>
+      </aside>
+
+    </section>
+
+    <!-- 4. Pantalla de Recompensa tras el Combate -->
+    <section id="screen-reward" class="screen-reward hidden" aria-label="Recompensas">
+      <div class="reward-card-container">
+        <h2>✨ ¡Victoria Alquímica!</h2>
+        <p id="reward-gold-amount" class="hud-val">+25 🪙 Monedas</p>
+        <p class="text-muted">Elige una esencia para incorporar a tu mazo:</p>
+
+        <div id="reward-cards-container" class="reward-cards-tray"></div>
+
+        <button id="btn-skip-reward" class="btn-secondary">Omitir y Volver al Mapa</button>
+      </div>
+    </section>
+
+    <!-- 5. Pantalla de Evento Alquímico -->
+    <section id="screen-event" class="screen-event hidden" aria-label="Evento Misterioso">
+      <div class="event-card-container">
+        <h2 id="event-title">Santuario Místico</h2>
+        <p id="event-desc">Descripción del evento...</p>
+        <div id="event-options" class="event-options-list"></div>
+      </div>
+    </section>
+
+    <!-- 6. Pantalla de Bazar / Tienda -->
+    <section id="screen-shop" class="screen-shop hidden" aria-label="Bazar Alquímico">
+      <div class="screen-inner-card">
+        <h2>🪙 Bazar de Transmutación</h2>
+        <p class="text-muted">Intercambia tu oro por esencias puras o reliquias místicas.</p>
+        <div id="shop-items" class="shop-grid"></div>
+        <button id="btn-leave-shop" class="btn-primary">Volver al Mapa</button>
+      </div>
+    </section>
+
+    <!-- 7. Pantalla de Descanso / Atanor -->
+    <section id="screen-rest" class="screen-rest hidden" aria-label="Atanor de Descanso">
+      <div class="screen-inner-card text-center">
+        <h2>🔥 Atanor de Descanso</h2>
+        <p class="text-muted">El calor sagrado del atanor calma tu espíritu. Elige una acción:</p>
+        
+        <div class="rest-options-grid">
+          <div class="rest-card">
+            <span class="rest-icon">💖</span>
+            <h3>Descansar</h3>
+            <p>Restaura un 35% de tu Salud Máxima.</p>
+            <button id="btn-rest-heal" class="btn-primary">Sanar Heridas</button>
+          </div>
+
+          <div class="rest-card">
+            <span class="rest-icon">✨</span>
+            <h3>Forjar Éter</h3>
+            <p>Agrega una carta pura de Éter Astral a tu mazo.</p>
+            <button id="btn-rest-forge" class="btn-secondary">Canalizar Éter</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 8. Pantalla de Fin de Juego (Victoria / Derrota) -->
+    <section id="screen-end" class="screen-end hidden" aria-label="Resultado de la Partida">
+      <div class="end-card-hero">
+        <h2 id="end-title" class="end-title">Fin de la Partida</h2>
+        <p id="end-desc">Detalles del desenlace...</p>
+        <button id="btn-restart-game" class="btn-primary">Volver al Atanor Inicial</button>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Modal: Visor de Mazo Completo -->
+  <div id="deck-modal" class="modal-overlay hidden" aria-modal="true" role="dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Tu Mazo Alquímico</h3>
+        <button id="btn-close-deck-modal" class="btn-secondary">✖</button>
+      </div>
+      <div class="modal-body">
+        <div id="deck-modal-list" class="modal-cards-grid"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Grimorio de Recetas -->
+  <div id="recipes-modal" class="modal-overlay hidden" aria-modal="true" role="dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>📖 Grimorio de Fusión Elemental</h3>
+        <button id="btn-close-recipes-modal" class="btn-secondary">✖</button>
+      </div>
+      <div class="modal-body">
+        <div id="recipes-modal-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Script Modular ES6 -->
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
